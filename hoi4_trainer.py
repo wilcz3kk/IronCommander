@@ -912,8 +912,8 @@ class HOI4CommanderGUI:
         self.btn_ironman.pack(side="right")
 
         # 3. Pasek Nawigacji Zakładek
-        tab_nav = tk.Frame(self.root, bg=GLASS_BG, padx=22, pady=(0, 10))
-        tab_nav.pack(fill="x")
+        tab_nav = tk.Frame(self.root, bg=GLASS_BG)
+        tab_nav.pack(fill="x", padx=22, pady=(0, 10))
 
         self.active_tab = "stats"
         self.tab_buttons = {}
@@ -1297,9 +1297,10 @@ class HOI4CommanderGUI:
         half = (len(GAME_TOGGLES) + 1) // 2
         for idx, toggle_tuple in enumerate(GAME_TOGGLES):
             col = 0 if idx < half else 1
-            self._create_glass_toggle_card(grid_frame, toggle_tuple, col)
+            row = idx if col == 0 else (idx - half)
+            self._create_glass_toggle_card(grid_frame, toggle_tuple, row, col)
 
-    def _create_glass_toggle_card(self, parent, toggle_tuple, col):
+    def _create_glass_toggle_card(self, parent, toggle_tuple, row, col):
         tid, title, desc, rva_list, vk, hk_str = toggle_tuple
 
         card = tk.Frame(
@@ -1310,7 +1311,7 @@ class HOI4CommanderGUI:
             padx=14,
             pady=10,
         )
-        card.grid(row=parent.grid_size()[1] if col == 0 else (parent.grid_size()[1] - 1), column=col, sticky="nsew", padx=6, pady=4)
+        card.grid(row=row, column=col, sticky="nsew", padx=6, pady=4)
 
         top_line = tk.Frame(card, bg=GLASS_CARD)
         top_line.pack(fill="x")

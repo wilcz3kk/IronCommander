@@ -28,7 +28,7 @@ namespace IronCommander
             if (string.IsNullOrEmpty(pythonExe))
             {
                 MessageBox.Show(
-                    "Nie znaleziono interpretera Python (pythonw.exe / python.exe).\n\nZainstaluj Python 3 z oficjalnej strony python.org lub Microsoft Store i upewnij się, że zaznaczono opcję 'Add Python to PATH'.",
+                    "Nie znaleziono interpretera Python (pythonw.exe / python.exe).\n\nZainstaluj Python 3 z oficjalnej strony python.org i upewnij się, że zaznaczono opcję 'Add Python to PATH'.",
                     "HOI4 IronCommander — Brak Pythona",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning
@@ -52,8 +52,22 @@ namespace IronCommander
                 psi.WorkingDirectory = baseDir;
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = true;
+                psi.RedirectStandardError = true;
 
-                Process.Start(psi);
+                Process proc = Process.Start(psi);
+                if (proc != null && proc.WaitForExit(1200))
+                {
+                    if (proc.ExitCode != 0)
+                    {
+                        string err = proc.StandardError.ReadToEnd();
+                        MessageBox.Show(
+                            "Skrypt zakończył działanie z błędem (kod " + proc.ExitCode + "):\n\n" + err,
+                            "HOI4 IronCommander — Błąd Uruchamiania",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -66,9 +80,44 @@ namespace IronCommander
             }
         }
 
+        static bool IsValidPythonBinary(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return false;
+                if (path.IndexOf("WindowsApps", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    FileInfo fi = new FileInfo(path);
+                    if (fi.Length == 0) return false;
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         static string FindPythonExecutable()
         {
-            // 1. Sprawdź pythonw.exe w PATH
+            // 1. Typowe lokalizacje pełnej instalacji Pythona użytkownika
+            string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string pyDir = Path.Combine(localApp, "Programs", "Python");
+            if (Directory.Exists(pyDir))
+            {
+                string[] dirs = Directory.GetDirectories(pyDir, "Python3*");
+                Array.Sort(dirs);
+                Array.Reverse(dirs);
+                foreach (string sub in dirs)
+                {
+                    string candW = Path.Combine(sub, "pythonw.exe");
+                    if (IsValidPythonBinary(candW)) return candW;
+                    string candPy = Path.Combine(sub, "python.exe");
+                    if (IsValidPythonBinary(candPy)) return candPy;
+                }
+            }
+
+            // 2. Sprawdź pythonw.exe w PATH (pomijając puste aliasy WindowsApps)
             string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             string[] paths = pathEnv.Split(Path.PathSeparator);
 
@@ -76,29 +125,15 @@ namespace IronCommander
             {
                 if (string.IsNullOrWhiteSpace(p)) continue;
                 string w = Path.Combine(p.Trim(), "pythonw.exe");
-                if (File.Exists(w)) return w;
+                if (IsValidPythonBinary(w)) return w;
             }
 
-            // 2. Sprawdź python.exe w PATH
+            // 3. Sprawdź python.exe w PATH
             foreach (string p in paths)
             {
                 if (string.IsNullOrWhiteSpace(p)) continue;
                 string py = Path.Combine(p.Trim(), "python.exe");
-                if (File.Exists(py)) return py;
-            }
-
-            // 3. Typowe lokalizacje instalacji użytkownika
-            string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string pyDir = Path.Combine(localApp, "Programs", "Python");
-            if (Directory.Exists(pyDir))
-            {
-                foreach (string sub in Directory.GetDirectories(pyDir, "Python3*"))
-                {
-                    string candW = Path.Combine(sub, "pythonw.exe");
-                    if (File.Exists(candW)) return candW;
-                    string candPy = Path.Combine(sub, "python.exe");
-                    if (File.Exists(candPy)) return candPy;
-                }
+                if (IsValidPythonBinary(py)) return py;
             }
 
             return null;
