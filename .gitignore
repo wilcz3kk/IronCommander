@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+venv/
+ENV/
+
+# Windows Shortcuts & Metadata
+*.lnk
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build & Debug Artifacts
+*.pdb
+*.obj
+*.log

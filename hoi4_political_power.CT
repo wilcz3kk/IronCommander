@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="45">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"[1] Aktywuj Rozwiązywanie Państwa Gracza (CGameState -> CCountry*)"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+luaCall(function()
+  local base = getAddressSafe("hoi4.exe")
+  if not base then error("Nie znaleziono procesu hoi4.exe!") end
+  unregisterSymbol("pPlayerCountry")
+  unregisterSymbol("pPlayerPolitical")
+  unregisterSymbol("pPlayerFuel")
+  unregisterSymbol("pPlayerNukes")
+  unregisterSymbol("pPlayerXP")
+  registerSymbol("pPlayerCountry", allocateMemory(8))
+  registerSymbol("pPlayerPolitical", allocateMemory(8))
+  registerSymbol("pPlayerFuel", allocateMemory(8))
+  registerSymbol("pPlayerNukes", allocateMemory(8))
+  registerSymbol("pPlayerXP", allocateMemory(8))
+
+  if PlayerResolverTimer then PlayerResolverTimer.destroy() end
+  PlayerResolverTimer = createTimer(nil, true)
+  PlayerResolverTimer.Interval = 250
+  PlayerResolverTimer.OnTimer = function()
+    local b = getAddressSafe("hoi4.exe")
+    if not b then return end
+    local gs = readQword(b + 0x33DD6B0)
+    if not gs or gs == 0 then return end
+    local tag = readInteger(gs + 0x520)
+    if not tag or tag <= 0 then tag = readInteger(gs + 0x524) end
+    if not tag or tag <= 0 then return end
+    local tag2idx = readQword(gs + 0x340)
+    if not tag2idx or tag2idx == 0 then return end
+    local cidx = readInteger(tag2idx + tag * 4)
+    if not cidx or cidx < 0 then return end
+    local carr = readQword(gs + 0x310)
+    if not carr or carr == 0 then return end
+    local ccountry = readQword(carr + cidx * 8)
+    if not ccountry or ccountry == 0 then return end
+
+    writeQword("pPlayerCountry", ccountry)
+    writeQword("pPlayerPolitical", readQword(ccountry + 0xF90) or 0)
+    writeQword("pPlayerNukes", readQword(ccountry + 0x1310) or 0)
+    writeQword("pPlayerFuel", readQword(ccountry + 0x1580) or 0)
+    writeQword("pPlayerXP", readQword(ccountry + 0x1588) or 0)
+  end
+end)
+
+[DISABLE]
+luaCall(function()
+  if PlayerResolverTimer then
+    PlayerResolverTimer.destroy()
+    PlayerResolverTimer = nil
+  end
+end)
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>10</ID>
+          <Description>"Political Power (CFixedPoint: 1.0 = 100,000)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerPolitical</Address>
+          <Offsets>
+            <Offset>E0</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"Command Power (CFixedPoint: 1.0 = 100,000)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerCountry</Address>
+          <Offsets>
+            <Offset>1F0</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>12</ID>
+          <Description>"Stability (CFixedPoint: 100% = 100,000)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerCountry</Address>
+          <Offsets>
+            <Offset>10D0</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>13</ID>
+          <Description>"War Support (CFixedPoint: 100% = 100,000)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerCountry</Address>
+          <Offsets>
+            <Offset>10D8</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>14</ID>
+          <Description>"Manpower (int32: 1 = 1)"</Description>
+          <VariableType>4 Bytes</VariableType>
+          <Address>pPlayerCountry</Address>
+          <Offsets>
+            <Offset>340</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>15</ID>
+          <Description>"Current Fuel (Q49.15: 1.0 = 32,768)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerFuel</Address>
+          <Offsets>
+            <Offset>8</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>16</ID>
+          <Description>"Nuclear Bombs (int64: 1 Nuke = 100,000,000)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerNukes</Address>
+          <Offsets>
+            <Offset>18</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>17</ID>
+          <Description>"Army XP (Q49.15: 1.0 = 32,768)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerXP</Address>
+          <Offsets>
+            <Offset>40</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>18</ID>
+          <Description>"Navy XP (Q49.15: 1.0 = 32,768)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerXP</Address>
+          <Offsets>
+            <Offset>28</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>19</ID>
+          <Description>"Air XP (Q49.15: 1.0 = 32,768)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerXP</Address>
+          <Offsets>
+            <Offset>10</Offset>
+          </Offsets>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"[2] Globalne Flagi Przełączników w .data (0 = OFF, 1 = ON)"</Description>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>20</ID>
+          <Description>"Instant Construction (ic)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA98</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>21</ID>
+          <Description>"Instant Army Training (it)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA9B</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>22</ID>
+          <Description>"Instant Ship Refitting"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA99</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>23</ID>
+          <Description>"Instant Research on Icon Click"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA86</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>24</ID>
+          <Description>"Fast National Focus (Focus.AutoComplete)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA9C</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>25</ID>
+          <Description>"Teleport / Instant Movement (tp)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA8B</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26</ID>
+          <Description>"Allow All Diplomacy (allowdiplo)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA87</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>27</ID>
+          <Description>"AI Always Accepts Diplomacy (yesman)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDA89</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>28</ID>
+          <Description>"Instant War Goal Generation"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDAB4</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>29</ID>
+          <Description>"Declare War Without Wargoal (nocb)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDAB5</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+</CheatTable>
