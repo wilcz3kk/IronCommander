@@ -8,20 +8,22 @@
 
 **IronCommander** is a lightweight, open-source single-player tactical deck, real-time memory inspector, and trainer suite for **Hearts of Iron IV** (`hoi4.exe`, Paradox Clausewitz Engine, x86_64 PE32+).
 
-Designed for modders, scenario testers, and reverse engineering enthusiasts, it provides an intuitive dark-themed dashboard, live ASLR dynamic pointer resolution, 14 non-invasive in-engine tactical toggles, and zero-dependency runtime.
+Designed for modders, scenario testers, and reverse engineering enthusiasts, it provides a modern **Liquid Glass** responsive dashboard, live ASLR dynamic pointer resolution, 15 non-invasive in-engine tactical toggles, a full **Steam Achievements Master Bypass & Protection** subsystem, and zero-dependency runtime.
 
 ---
 
 ## ✨ Features
 
 * **⚡ Zero External Dependencies:** Written in 100% pure standard Python (`ctypes`, `tkinter`, `struct`) interacting directly with the native Windows kernel (`kernel32.dll`, `user32.dll`). No pip packages required.
-* **🖥️ Modern Tactical Dashboard (GUI):** Sleek dark interface with animated pill-switches, live telemetry monitor, and global hotkeys (`F1`–`F11`).
+* **💎 Liquid Glass Responsive UI:** Deep obsidian glass theme with neon chromatic accents (cyan, emerald, gold, purple), animated pill-switches, responsive auto-resizing Canvas viewports (no clipping regardless of window scaling), and global hotkeys (`F1`–`F11`).
+* **🏆 Steam Achievements Master Bypass:** Directly hooks `CAchievementsManager*` (`[hoi4.exe + 0x33DE950]`) and sets the engine master bypass flag (`+0xA3 = 1`). Guarantees that the golden achievement cup stays active and Steam achievements unlock in real time regardless of cheats, mods, non-ironman saves, or custom difficulty settings.
+* **🚀 Infinite Production & Instant Output:** One-click toggle and lock for instant naval dockyard output, factory construction, and military equipment throughput.
 * **🎯 Non-Invasive `.data` Toggles:** Modifies native single-byte engine flags in the `.data` section instead of patching executable code (`.text`). Perfectly stable, crash-free, and reversible at runtime.
 * **🔍 Dynamic Pointer Resolution:** Automatically tracks ASLR base offsets, reads the singleton `CGameState*`, and resolves the active player's `CCountry*` instance and country tag in real time.
-* **🔒 Resource Freezing (Unlimited Mode):** High-frequency thread locks resources and XP at specified values.
-* **🛡️ Ironman Console Unlocker:** One-click toggle of the internal Ironman flag (`[CGameState + 0xC0]`), allowing the developer debug console (`~`) to be used without restarting or altering save files.
+* **🔒 Resource Freezing (Unlimited Mode):** High-frequency thread locks resources, fuel, nukes, and military XP at specified values.
+* **🛡️ Ironman State Protector:** Dynamic telemetry and control over `[CGameState + 0xC0]`, keeping ironman active for saves while developer tools remain available.
 * **📦 Native Windows Launcher:** Includes `HOI4_Commander.exe` (with embedded high-res icon) and open C# source code (`Launcher.cs`) that compiles using Windows' built-in `csc.exe`.
-* **📑 Cheat Engine Table:** Includes `hoi4_political_power.CT` with pointer structures and toggle addresses.
+* **📑 Cheat Engine Table:** Includes `hoi4_political_power.CT` with pointer structures, `CAchievementsManager` flags, and `.data` engine toggles.
 
 ---
 
@@ -30,9 +32,9 @@ Designed for modders, scenario testers, and reverse engineering enthusiasts, it 
 | File | Description |
 | :--- | :--- |
 | **`HOI4_Commander.exe`** | Pre-compiled native Windows GUI launcher with embedded application icon. |
-| **`hoi4_trainer.py`** | Main tactical GUI application (Dark Theme, live telemetry, hotkey daemon, stat lockers). |
+| **`hoi4_trainer.py`** | Main tactical GUI application (Liquid Glass design, responsive layout, achievements bypass, stat lockers). |
 | **`hoi4_pp_trainer.py`** | Standalone command-line interface (CLI) with AOB signature scanner and memory analyzer. |
-| **`hoi4_political_power.CT`** | Cheat Engine 7.x table with pointer maps and `.data` flag list. |
+| **`hoi4_political_power.CT`** | Cheat Engine 7.x table with pointer maps, `CAchievementsManager`, and `.data` flag list. |
 | **`Launcher.cs`** | C# source code for the standalone executable launcher. |
 | **`build_launcher.bat`** | One-click build script to compile `Launcher.cs` using Windows native `csc.exe`. |
 | **`hoi4_trainer.ico`** | Application icon resource. |
@@ -53,7 +55,7 @@ python hoi4_trainer.py
 ### Option 3: Command-Line (CLI) Mode
 To inspect memory or test via terminal:
 ```bash
-# Verify binary AOB signatures statically
+# Verify binary AOB signatures and RVA singletons statically
 python hoi4_trainer.py --verify-static
 
 # Run CLI scanner
@@ -68,7 +70,7 @@ All toggles interact directly with Clausewitz engine flags in `.data`:
 
 | Hotkey | Feature | Engine RVA | Description |
 | :---: | :--- | :---: | :--- |
-| **`F1`** | **Instant Construction** | `0x33DDA98` | Buildings, infrastructure, and factories finish in 1 day (`ic`). |
+| **`F1`** | **Instant Construction & Production** | `0x33DDA98` | Buildings, infrastructure, and dockyard ships complete in 1 day (`ic`). |
 | **`F2`** | **Instant Army Training** | `0x33DDA9B` | Military divisions recruit and deploy instantly (`it`). |
 | **`F3`** | **Instant Ship Refit** | `0x33DDA99` | Ship upgrading and drydock overhaul complete in 1 day. |
 | **`F4`** | **Instant Research** | `0x33DDA86` | Any selected technology researches instantly on click. |
@@ -82,6 +84,7 @@ All toggles interact directly with Clausewitz engine flags in `.data`:
 | — | **Zero Supply Penalties** | `0x312AC80` | Suppresses division attrition from low logistics or bad terrain. |
 | — | **Ignore Naval Superiority**| `0x33DDAA4` | Enables naval invasions regardless of regional naval dominance. |
 | — | **Bypass Focus Prereqs** | `0x33DDA9C` | Unlocks mutually exclusive or locked focus tree branches. |
+| — | **Unlock Ideas & Traits** | `0x33DDAB8` / `A88` | Unlocks all government ideas and military commander traits. |
 
 ---
 
@@ -97,12 +100,24 @@ hoi4.exe (PE32+ Base Image = 0x140000000 + ASLR Slide)
   │                                                    ├── +0x358  3-Letter Tag String Array
   │                                                    └── +0x520  Active Player Tag ID (int32)
   │
+  ├── [hoi4.exe + 0x33DE950] ──────────────────────► CAchievementsManager* Singleton
+  │                                                    ├── +0x010  std::vector<CAchievement*>
+  │                                                    ├── +0x0A0  Blocked / Error Flag (uint8, must be 0)
+  │                                                    ├── +0x0A1  Ironman Valid Flag (uint8, 1 = OK)
+  │                                                    ├── +0x0A2  Checksum Valid Flag (uint8, 1 = OK)
+  │                                                    ├── +0x0A3  Master Bypass Flag (uint8, 1 = Force Allow!)
+  │                                                    └── +0x0A4  Custom Mod Achievements Flag
+  │
+  ├── [hoi4.exe + 0x33DDAB6] ──────────────────────► Debug Achievements Engine Flag (uint8)
+  ├── [hoi4.exe + 0x3500F19] ──────────────────────► Cheats / Debug Detected Flag (cleared to 0)
+  │
   └── CCountry* (Active Player State)
         ├── +0x1F0   Command Power (CFixedPoint, scale: 100,000)
         ├── +0x340   Manpower (int32, scale: 1:1)
         ├── +0xF90   CPoliticalStatus* ──► +0xE0   Political Power (scale: 100,000)
         ├── +0x10D0  Stability (scale: 1,000 per 1%)
         ├── +0x10D8  War Support (scale: 1,000 per 1%)
+        ├── +0x1200  CEquipmentPool (Equipment Inventory & Stockpile)
         ├── +0x1310  CNuclearManager*   ──► +0x18   Nukes Count (scale: 100,000,000)
         ├── +0x1580  CFuelManager*      ──► +0x08   Current Fuel (Q49.15, scale: 32,768)
         └── +0x1588  CCountryXP*        ──► +0x10   Air XP (Q49.15, scale: 32,768)

@@ -3,7 +3,7 @@
   <CheatEntries>
     <CheatEntry>
       <ID>1</ID>
-      <Description>"[1] Aktywuj Rozwiązywanie Państwa Gracza (CGameState -> CCountry*)"</Description>
+      <Description>"[1] Aktywuj Rozwiązywanie Państwa Gracza & Osiągnięć (CGameState / CAchievementsManager)"</Description>
       <VariableType>Auto Assembler Script</VariableType>
       <AssemblerScript>[ENABLE]
 luaCall(function()
@@ -14,11 +14,13 @@ luaCall(function()
   unregisterSymbol("pPlayerFuel")
   unregisterSymbol("pPlayerNukes")
   unregisterSymbol("pPlayerXP")
+  unregisterSymbol("pAchievementsManager")
   registerSymbol("pPlayerCountry", allocateMemory(8))
   registerSymbol("pPlayerPolitical", allocateMemory(8))
   registerSymbol("pPlayerFuel", allocateMemory(8))
   registerSymbol("pPlayerNukes", allocateMemory(8))
   registerSymbol("pPlayerXP", allocateMemory(8))
+  registerSymbol("pAchievementsManager", allocateMemory(8))
 
   if PlayerResolverTimer then PlayerResolverTimer.destroy() end
   PlayerResolverTimer = createTimer(nil, true)
@@ -27,6 +29,10 @@ luaCall(function()
     local b = getAddressSafe("hoi4.exe")
     if not b then return end
     local gs = readQword(b + 0x33DD6B0)
+    local achMgr = readQword(b + 0x33DE950)
+    if achMgr and achMgr ~= 0 then
+      writeQword("pAchievementsManager", achMgr)
+    end
     if not gs or gs == 0 then return end
     local tag = readInteger(gs + 0x520)
     if not tag or tag <= 0 then tag = readInteger(gs + 0x524) end
@@ -104,16 +110,7 @@ end)
         </CheatEntry>
         <CheatEntry>
           <ID>15</ID>
-          <Description>"Current Fuel (Q49.15: 1.0 = 32,768)"</Description>
-          <VariableType>8 Bytes</VariableType>
-          <Address>pPlayerFuel</Address>
-          <Offsets>
-            <Offset>8</Offset>
-          </Offsets>
-        </CheatEntry>
-        <CheatEntry>
-          <ID>16</ID>
-          <Description>"Nuclear Bombs (int64: 1 Nuke = 100,000,000)"</Description>
+          <Description>"Nuclear Bombs (int64: scale 100,000,000)"</Description>
           <VariableType>8 Bytes</VariableType>
           <Address>pPlayerNukes</Address>
           <Offsets>
@@ -121,8 +118,17 @@ end)
           </Offsets>
         </CheatEntry>
         <CheatEntry>
+          <ID>16</ID>
+          <Description>"Current Fuel (Q49.15: 1.0 = 32,768)"</Description>
+          <VariableType>8 Bytes</VariableType>
+          <Address>pPlayerFuel</Address>
+          <Offsets>
+            <Offset>08</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
           <ID>17</ID>
-          <Description>"Army XP (Q49.15: 1.0 = 32,768)"</Description>
+          <Description>"Army Experience XP (Q49.15: 1.0 = 32,768)"</Description>
           <VariableType>8 Bytes</VariableType>
           <Address>pPlayerXP</Address>
           <Offsets>
@@ -131,7 +137,7 @@ end)
         </CheatEntry>
         <CheatEntry>
           <ID>18</ID>
-          <Description>"Navy XP (Q49.15: 1.0 = 32,768)"</Description>
+          <Description>"Navy Experience XP (Q49.15: 1.0 = 32,768)"</Description>
           <VariableType>8 Bytes</VariableType>
           <Address>pPlayerXP</Address>
           <Offsets>
@@ -140,7 +146,7 @@ end)
         </CheatEntry>
         <CheatEntry>
           <ID>19</ID>
-          <Description>"Air XP (Q49.15: 1.0 = 32,768)"</Description>
+          <Description>"Air Experience XP (Q49.15: 1.0 = 32,768)"</Description>
           <VariableType>8 Bytes</VariableType>
           <Address>pPlayerXP</Address>
           <Offsets>
@@ -151,12 +157,67 @@ end)
     </CheatEntry>
     <CheatEntry>
       <ID>2</ID>
-      <Description>"[2] Globalne Flagi Przełączników w .data (0 = OFF, 1 = ON)"</Description>
+      <Description>"[2] Podsystem Osiągnięć Steam (CAchievementsManager)"</Description>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>40</ID>
+          <Description>"Master Achievement Bypass (+0xA3: 1 = FORCE ALLOW ALL ACHIEVEMENTS)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>pAchievementsManager</Address>
+          <Offsets>
+            <Offset>A3</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>41</ID>
+          <Description>"Ironman Valid Flag (+0xA1: 1 = Ironman OK)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>pAchievementsManager</Address>
+          <Offsets>
+            <Offset>A1</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>42</ID>
+          <Description>"Checksum Valid Flag (+0xA2: 1 = Checksum/Mods OK)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>pAchievementsManager</Address>
+          <Offsets>
+            <Offset>A2</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>43</ID>
+          <Description>"Achievement Blocked Flag (+0xA0: 0 = NOT Blocked)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>pAchievementsManager</Address>
+          <Offsets>
+            <Offset>A0</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>44</ID>
+          <Description>"Engine Debug Achievements Flag (0x33DDAB6)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDAB6</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>45</ID>
+          <Description>"Cheats / Debug Detected Flag (0x3500F19: Set to 0)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+3500F19</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>3</ID>
+      <Description>"[3] Globalne Flagi Przełączników w .data (0 = OFF, 1 = ON)"</Description>
       <GroupHeader>1</GroupHeader>
       <CheatEntries>
         <CheatEntry>
           <ID>20</ID>
-          <Description>"Instant Construction (ic)"</Description>
+          <Description>"Instant Construction &amp; Production (ic)"</Description>
           <VariableType>Byte</VariableType>
           <Address>hoi4.exe+33DDA98</Address>
         </CheatEntry>
@@ -213,6 +274,18 @@ end)
           <Description>"Declare War Without Wargoal (nocb)"</Description>
           <VariableType>Byte</VariableType>
           <Address>hoi4.exe+33DDAB5</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>30</ID>
+          <Description>"Disable Fog of War (fow off: 0=Disabled)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+33DDAAA</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>31</ID>
+          <Description>"Zero Supply Penalties (0=Disabled)"</Description>
+          <VariableType>Byte</VariableType>
+          <Address>hoi4.exe+312AC80</Address>
         </CheatEntry>
       </CheatEntries>
     </CheatEntry>
